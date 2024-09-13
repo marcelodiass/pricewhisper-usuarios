@@ -1,0 +1,6 @@
+@pricewhisper_HostAddress = http://localhost:5036
+
+GET {{pricewhisper_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
