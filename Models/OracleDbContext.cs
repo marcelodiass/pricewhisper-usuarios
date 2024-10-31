@@ -8,5 +8,15 @@ namespace pricewhisper.Models
 
         public DbSet<Usuario> Usuarios { get; set; }
         public DbSet<Empresa> Empresas { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Usuario>()
+                .HasOne(u => u.Empresa)
+                .WithMany(e => e.Usuarios)
+                .HasForeignKey(u => u.EmpresaId);
+
+            base.OnModelCreating(modelBuilder);
+        }
     }
 }

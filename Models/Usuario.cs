@@ -1,11 +1,11 @@
-﻿using System.ComponentModel.DataAnnotations.Schema;
+using System.ComponentModel.DataAnnotations.Schema;
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace pricewhisper.Models
 {
     public class Usuario
     {
-
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int UsuarioId { get; set; }
@@ -19,8 +19,9 @@ namespace pricewhisper.Models
         [Required]
         public string Senha { get; set; }
 
-
         public int EmpresaId { get; set; }
+
+        [JsonIgnore] // Adicionar este atributo
         public Empresa? Empresa { get; set; }
     }
 }

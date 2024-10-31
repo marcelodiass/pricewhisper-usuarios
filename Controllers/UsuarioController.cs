@@ -21,9 +21,10 @@ namespace pricewhisper.Controllers
         /// </remarks>
         /// <response code="200">Retorna a lista de todos os usuários.</response>
         [HttpGet]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<Usuario>> Get()
         {
-            return _context.Usuarios;
+            return _context.Usuarios.Include(u => u.Empresa).ToList();
         }
 
         /// <summary>
@@ -37,9 +38,14 @@ namespace pricewhisper.Controllers
         /// <response code="200">Retorna o usuário.</response>
         /// <response code="404">Usuário não encontrado.</response>
         [HttpGet("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Usuario?>> GetById(int id)
         {
-            return await _context.Usuarios.Where(x => x.UsuarioId == id).SingleOrDefaultAsync();
+            return await _context.Usuarios
+                .Include(u => u.Empresa)
+                .Where(x => x.UsuarioId == id)
+                .SingleOrDefaultAsync();
         }
 
         /// <summary>
@@ -74,12 +80,22 @@ namespace pricewhisper.Controllers
         /// <response code="400">Solicitação inválida. Pode ocorrer se algum campo obrigatório estiver faltando ou o formato estiver incorreto.</response>
         /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicitação.</response>
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Create(Usuario usuario)
         {
+            var empresa = await _context.Empresas.FindAsync(usuario.EmpresaId);
+            if (empresa == null)
+            {
+                return BadRequest("Empresa não encontrada");
+            }
+
+            usuario.Empresa = empresa;
             await _context.Usuarios.AddAsync(usuario);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = usuario.UsuarioId}, usuario);
+            return CreatedAtAction(nameof(GetById), new { id = usuario.UsuarioId }, usuario);
         }
 
         /// <summary>
@@ -114,6 +130,9 @@ namespace pricewhisper.Controllers
         /// <response code="400">Solicitação inválida. Pode ocorrer se algum campo obrigatório estiver faltando ou o formato estiver incorreto.</response>
         /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicitação.</response>
         [HttpPut]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<ActionResult> Update(Usuario usuario)
         {
             _context.Usuarios.Update(usuario);
@@ -133,6 +152,8 @@ namespace pricewhisper.Controllers
         /// <response code="200">Usuário deletado com sucesso</response>
         /// <response code="404">Usuário não encontrado.</response>
         [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(int id)
         {
             var usuarioGetByIdResult = await GetById(id);
@@ -140,6 +161,7 @@ namespace pricewhisper.Controllers
             if (usuarioGetByIdResult.Value is null) { return NotFound(); }
 
             _context.Usuarios.Remove(usuarioGetByIdResult.Value);
+            await _context.SaveChangesAsync();
             return Ok();
         }
     }
