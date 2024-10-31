@@ -21,7 +21,6 @@ namespace pricewhisper.Models
 
         public int EmpresaId { get; set; }
 
-        [JsonIgnore] // Adicionar este atributo
         public Empresa? Empresa { get; set; }
     }
 }

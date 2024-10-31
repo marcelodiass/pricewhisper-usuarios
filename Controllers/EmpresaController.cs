@@ -1,8 +1,9 @@
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using pricewhisper.Models;
 using pricewhisper.Services;
+using pricewhisper.Models.DTOs;
 
 namespace pricewhisper.Controllers
 {
@@ -20,7 +21,7 @@ namespace pricewhisper.Controllers
         }
 
         /// <summary>
-        /// Obt�m todos as empresas.
+        /// Obtém todos as empresas.
         /// </summary>
         /// <remarks>
         /// Exemplo de uso: GET /api/Empresa
@@ -28,37 +29,76 @@ namespace pricewhisper.Controllers
         /// <response code="200">Retorna a lista de todas as empresas.</response>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public ActionResult<IEnumerable<Empresa>> Get()
+        public ActionResult<IEnumerable<EmpresaDto>> Get()
         {
-            return _context.Empresas.Include(e => e.Usuarios).ToList();
+            var empresas = _context.Empresas
+                .Include(e => e.Usuarios)
+                .Select(e => new EmpresaDto
+                {
+                    EmpresaId = e.EmpresaId,
+                    CNPJ = e.CNPJ,
+                    RazaoSocial = e.RazaoSocial,
+                    NomeFantasia = e.NomeFantasia,
+                    Usuarios = e.Usuarios.Select(u => new UsuarioDto
+                    {
+                        UsuarioId = u.UsuarioId,
+                        Nome = u.Nome,
+                        NomeUsuario = u.NomeUsuario,
+                        Senha = u.Senha,
+                        EmpresaId = u.EmpresaId,
+                        RazaoSocialEmpresa = e.RazaoSocial
+                    }).ToList()
+                }).ToList();
+
+            return empresas;
         }
 
         /// <summary>
-        /// Obt�m uma Empresa pelo ID.
+        /// Obtém uma Empresa pelo ID.
         /// </summary>
-        /// <param name="id">O ID da empresa que voc� deseja obter.</param>
+        /// <param name="id">O ID da empresa que você deseja obter.</param>
         /// <returns>A empresa com o id especificado.</returns>
         /// <remarks>
         /// Exemplo de uso: GET /api/Empresa/1
         /// </remarks>
         /// <response code="200">Retorna a Empresa.</response>
-        /// <response code="404">Empresa n�o encontrada.</response>
+        /// <response code="404">Empresa não encontrada.</response>
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
-        public async Task<ActionResult<Empresa?>> GetById(int id)
+        public async Task<ActionResult<EmpresaDto>> GetById(int id)
         {
-            return await _context.Empresas
+            var empresa = await _context.Empresas
                 .Include(e => e.Usuarios)
-                .Where(x => x.EmpresaId == id)
+                .Where(e => e.EmpresaId == id)
+                .Select(e => new EmpresaDto
+                {
+                    EmpresaId = e.EmpresaId,
+                    CNPJ = e.CNPJ,
+                    RazaoSocial = e.RazaoSocial,
+                    NomeFantasia = e.NomeFantasia,
+                    Usuarios = e.Usuarios.Select(u => new UsuarioDto
+                    {
+                        UsuarioId = u.UsuarioId,
+                        Nome = u.Nome,
+                        NomeUsuario = u.NomeUsuario,
+                        Senha = u.Senha,
+                        EmpresaId = u.EmpresaId,
+                        RazaoSocialEmpresa = e.RazaoSocial
+                    }).ToList()
+                })
                 .SingleOrDefaultAsync();
+
+            if (empresa == null) return NotFound();
+
+            return empresa;
         }
 
         /// <summary>
         /// Cria uma nova Empresa.
         /// </summary>
         /// <remarks>
-        /// Este endpoint permite que voc� crie uma nova Empresa. 
+        /// Este endpoint permite que você crie uma nova Empresa. 
         /// 
         /// Exemplo de uso:
         /// 
@@ -107,7 +147,7 @@ namespace pricewhisper.Controllers
         /// Atualiza uma Empresa existente.
         /// </summary>
         /// <remarks>
-        /// Este endpoint permite que voc� atualize uma empresa. 
+        /// Este endpoint permite que você atualize uma empresa. 
         /// 
         /// Exemplo de uso:
         /// 
@@ -132,8 +172,8 @@ namespace pricewhisper.Controllers
         /// }
         /// </remarks>
         /// <response code="200">A empresa foi atualizada com sucesso.</response>
-        /// <response code="400">Solicita��o inv�lida. Pode ocorrer se algum campo obrigat�rio estiver faltando ou o formato estiver incorreto.</response>
-        /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicita��o.</response>
+        /// <response code="400">Solicitação inválida. Pode ocorrer se algum campo obrigatório estiver faltando ou o formato estiver incorreto.</response>
+        /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicitação.</response>
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -149,22 +189,34 @@ namespace pricewhisper.Controllers
         /// <summary>
         /// Remove uma empresa pelo ID.
         /// </summary>
-        /// <param name="id">O ID da empresa que voc� deseja remover.</param>
+        /// <param name="id">O ID da empresa que você deseja remover.</param>
         /// <remarks>
         /// Exemplo de uso: DELETE /api/Empresa/1
         /// </remarks>
         /// <response code="200">Empresa deletada com sucesso</response>
-        /// <response code="404">Empresa n�o encontrada.</response>
+        /// <response code="404">Empresa não encontrada.</response>
         [HttpDelete("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult> Delete(int id)
         {
-            var empresaGetByIdResult = await GetById(id);
+            // Recupera a entidade Empresa diretamente do banco de dados
+            var empresa = await _context.Empresas
+                .Include(e => e.Usuarios) // Opcional: Inclui usuários relacionados, se necessário
+                .FirstOrDefaultAsync(e => e.EmpresaId == id);
 
-            if (empresaGetByIdResult.Value is null) { return NotFound(); }
+            if (empresa == null)
+            {
+                return NotFound();
+            }
 
-            _context.Empresas.Remove(empresaGetByIdResult.Value);
+            // Opcional: Remover ou reatribuir usuários relacionados antes de deletar a empresa
+            if (empresa.Usuarios != null && empresa.Usuarios.Any())
+            {
+                _context.Usuarios.RemoveRange(empresa.Usuarios);
+            }
+
+            _context.Empresas.Remove(empresa);
             await _context.SaveChangesAsync();
             return Ok();
         }

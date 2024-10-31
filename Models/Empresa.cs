@@ -24,7 +24,6 @@ namespace pricewhisper.Models
         [Required]
         public string NomeFantasia { get; set; }
 
-        [JsonIgnore] // Adicionar este atributo
         public ICollection<Usuario>? Usuarios { get; set; }
     }
 }
