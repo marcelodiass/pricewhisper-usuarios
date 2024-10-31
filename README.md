@@ -93,9 +93,9 @@ Obs.: A empresa deve existir, pois a API do CNPJá está realizando a verificaç
 ```
 {
   "empresaId": 1,
-  "cnpj": "12345678000190",
+  "cnpj": "47960950000121",
   "razaoSocial": "Magazine Luiza",
-  "nomeFantasia": "TechSolutions Corp"
+  "nomeFantasia": "Magazine Luiza"
   "usuarios": []
 }
 ```
