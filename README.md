@@ -95,8 +95,8 @@ Obs.: A empresa deve existir, pois a API do CNPJá está realizando a verificaç
 {
   "empresaId": 1,
   "cnpj": "47960950000121",
-  "razaoSocial": "Magazine Luiza",
-  "nomeFantasia": "Magazine Luiza"
+  "razaoSocial": "Magazine Luiza S/A",
+  "nomeFantasia": "Magalu"
   "usuarios": []
 }
 ```
