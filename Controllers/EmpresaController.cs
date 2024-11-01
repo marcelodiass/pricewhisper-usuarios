@@ -123,8 +123,8 @@ namespace pricewhisper.Controllers
         /// }
         /// </remarks>
         /// <response code="201">A empresa foi criada com sucesso.</response>
-        /// <response code="400">Solicita��o inv�lida. Pode ocorrer se algum campo obrigat�rio estiver faltando ou o formato estiver incorreto.</response>
-        /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicita��o.</response>
+        /// <response code="400">Solicitação inválida. Pode ocorrer se algum campo obrigatório estiver faltando ou o formato estiver incorreto.</response>
+        /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicitação.</response>
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -134,7 +134,7 @@ namespace pricewhisper.Controllers
             var cnpjInfo = await _cnpjaService.ConsultarCNPJ(empresa.CNPJ);
             if (cnpjInfo == null || cnpjInfo.TaxId == null)
             {
-                return BadRequest("CNPJ inv�lido ou n�o encontrado na base da Receita Federal");
+                return BadRequest("CNPJ inválido ou não encontrado na base da Receita Federal");
             }
 
             await _context.Empresas.AddAsync(empresa);
@@ -151,7 +151,7 @@ namespace pricewhisper.Controllers
         /// 
         /// Exemplo de uso:
         /// 
-        /// PUT /api/Empresa
+        /// PUT /api/Empresa/{id}
         /// 
         /// Body:
         /// {
@@ -174,12 +174,17 @@ namespace pricewhisper.Controllers
         /// <response code="200">A empresa foi atualizada com sucesso.</response>
         /// <response code="400">Solicitação inválida. Pode ocorrer se algum campo obrigatório estiver faltando ou o formato estiver incorreto.</response>
         /// <response code="500">Erro interno do servidor. Ocorre se houver um problema ao processar a solicitação.</response>
-        [HttpPut]
+        [HttpPut("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
         [ProducesResponseType(StatusCodes.Status500InternalServerError)]
-        public async Task<ActionResult> Update(Empresa empresa)
+        public async Task<ActionResult> Update(int id, Empresa empresa)
         {
+            if (id != empresa.EmpresaId)
+            {
+                return BadRequest("ID da empresa não corresponde ao ID na URL.");
+            }
+
             _context.Empresas.Update(empresa);
             await _context.SaveChangesAsync();
 
